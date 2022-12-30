@@ -141,6 +141,9 @@
   <ItemGroup>
     <ClCompile Include="libezhook.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="libezhook.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

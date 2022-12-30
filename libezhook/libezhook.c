@@ -1,27 +1,4 @@
-#include <stdio.h>
-#include <Windows.h>
-
-typedef struct _ezhook
-{
-	void* target;
-	void* detour;
-	void* ret_addr;
-	void* trampline;
-	unsigned char original_bytes[5];
-	unsigned char new_bytes[5];
-	void* ebx;
-	void* esi;
-	void* edi;
-	struct _ezhook* prev;
-	struct _ezhook* next;
-} ezhook;
-
-typedef struct _ezhook_entry
-{
-	void* target; // key
-	ezhook* hooks;
-	struct _ezhook_entry* next;
-} ezhook_entry;
+#include "libezhook.h"
 
 ezhook_entry* g_entries;
 
@@ -45,8 +22,7 @@ unsigned char g_trampline[0x74] =
 	0xC3
 };
 
-// find entry from global entry list
-__declspec(dllexport) ezhook_entry* find_entry(void* target)
+ezhook_entry* find_entry(void* target)
 {
 	for (ezhook_entry* entry = g_entries; entry; entry = entry->next)
 	{
@@ -56,8 +32,7 @@ __declspec(dllexport) ezhook_entry* find_entry(void* target)
 	return NULL;
 }
 
-// find hook from entry
-__declspec(dllexport) ezhook* find_hook(ezhook_entry* entry, void* detour)
+ezhook* find_hook(ezhook_entry* entry, void* detour)
 {
 	for (ezhook* hook = entry->hooks; hook; hook = hook->next)
 	{
@@ -67,8 +42,7 @@ __declspec(dllexport) ezhook* find_hook(ezhook_entry* entry, void* detour)
 	return NULL;
 }
 
-// set trampline's owner
-__declspec(dllexport) void tl_set_owner(void* trampline, ezhook * hook)
+void tl_set_owner(void* trampline, ezhook * hook)
 {
 	if (trampline == NULL || hook == NULL)
 		return;
@@ -98,8 +72,7 @@ __declspec(dllexport) void tl_set_owner(void* trampline, ezhook * hook)
 	*(unsigned int*)(utrampline + 0x6E) = &hook->ret_addr;
 }
 
-// hook a function, return its trampline
-__declspec(dllexport) void* hook(void* target, void* detour)
+void* hook(void* target, void* detour)
 {
 	// invalid hook
 	if (target == NULL || detour == NULL)
@@ -181,8 +154,7 @@ __declspec(dllexport) void* hook(void* target, void* detour)
 	return trampline;
 }
 
-// unhook a function
-__declspec(dllexport) void unhook(void* target, void* detour)
+void unhook(void* target, void* detour)
 {
 	// find entry
 	ezhook_entry* entry = find_entry(target);
@@ -233,37 +205,7 @@ __declspec(dllexport) void unhook(void* target, void* detour)
 	free(hook);
 }
 
-typedef int(__stdcall* MessageBoxAFn)(HWND, LPCSTR, LPCSTR, UINT);
-
-MessageBoxAFn OMessageBoxA00 = NULL;
-MessageBoxAFn OMessageBoxA01 = NULL;
-MessageBoxAFn OMessageBoxA02 = NULL;
-
-int __stdcall Hooked_MessageBoxA00(HWND hwnd, LPCSTR text, LPCSTR title, UINT type)
-{
-	printf("this is chain00\n");
-	return OMessageBoxA00(hwnd, "SUCCESS", "SUCCESS", type);
-}
-
-int __stdcall Hooked_MessageBoxA01(HWND hwnd, LPCSTR text, LPCSTR title, UINT type)
-{
-	printf("this is chain01\n");
-	return OMessageBoxA01(hwnd, text, title, type);
-}
-
-int __stdcall Hooked_MessageBoxA02(HWND hwnd, LPCSTR text, LPCSTR title, UINT type)
-{
-	printf("this is chain02\n");
-	return OMessageBoxA02(hwnd, text, title, type);
-}
-
 int main()
 {
-	OMessageBoxA00 = hook(MessageBoxA, Hooked_MessageBoxA00);
-	OMessageBoxA01 = hook(MessageBoxA, Hooked_MessageBoxA01);
-	OMessageBoxA02 = hook(MessageBoxA, Hooked_MessageBoxA02);
-	MessageBoxA(NULL, "FAILED", "FAILED", 0);
-	unhook(MessageBoxA, Hooked_MessageBoxA01);
-	MessageBoxA(NULL, "FAILED", "FAILED", 0);
-	return 0;
+
 }

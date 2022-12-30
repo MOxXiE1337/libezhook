@@ -1,1 +1,2 @@
-# libezhook: a simple hook library written in C, only for x86
+# libezhook
+a simple hook library written in C, only for x86
