@@ -24,16 +24,19 @@ typedef struct _ezhook_entry
 } ezhook_entry;
 
 // find entry from global entry list
-__declspec(dllexport) ezhook_entry* find_entry(void* target);
+__declspec(dllexport) ezhook_entry* __stdcall find_entry(void* target);
 
 // find hook from entry
-__declspec(dllexport) ezhook* find_hook(ezhook_entry* entry, void* detour);
+__declspec(dllexport) ezhook* __stdcall find_hook(ezhook_entry* entry, void* detour);
 
 // set trampline's owner
-__declspec(dllexport) void tl_set_owner(void* trampline, ezhook* hook);
+__declspec(dllexport) void __stdcall tl_set_owner(void* trampline, ezhook* hook);
 
 // hook a function, return its trampline
-__declspec(dllexport) void* hook(void* target, void* detour);
+__declspec(dllexport) void* __stdcall hook(void* target, void* detour);
+
+// hook a api function, return its trampline
+__declspec(dllexport) void* __stdcall hook_api(const char* module_name, const char* proc_name, void* detour);
 
 // unhook a function
-__declspec(dllexport) void unhook(void* target, void* detour);
+__declspec(dllexport) void __stdcall unhook(void* target, void* detour);

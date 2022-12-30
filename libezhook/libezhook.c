@@ -22,7 +22,7 @@ unsigned char g_trampline[0x74] =
 	0xC3
 };
 
-ezhook_entry* find_entry(void* target)
+ezhook_entry* __stdcall find_entry(void* target)
 {
 	for (ezhook_entry* entry = g_entries; entry; entry = entry->next)
 	{
@@ -32,7 +32,7 @@ ezhook_entry* find_entry(void* target)
 	return NULL;
 }
 
-ezhook* find_hook(ezhook_entry* entry, void* detour)
+ezhook* __stdcall find_hook(ezhook_entry* entry, void* detour)
 {
 	for (ezhook* hook = entry->hooks; hook; hook = hook->next)
 	{
@@ -42,7 +42,7 @@ ezhook* find_hook(ezhook_entry* entry, void* detour)
 	return NULL;
 }
 
-void tl_set_owner(void* trampline, ezhook * hook)
+void __stdcall tl_set_owner(void* trampline, ezhook * hook)
 {
 	if (trampline == NULL || hook == NULL)
 		return;
@@ -72,7 +72,7 @@ void tl_set_owner(void* trampline, ezhook * hook)
 	*(unsigned int*)(utrampline + 0x6E) = &hook->ret_addr;
 }
 
-void* hook(void* target, void* detour)
+void* __stdcall hook(void* target, void* detour)
 {
 	// invalid hook
 	if (target == NULL || detour == NULL)
@@ -154,7 +154,23 @@ void* hook(void* target, void* detour)
 	return trampline;
 }
 
-void unhook(void* target, void* detour)
+void* __stdcall hook_api(const char* module_name, const char* proc_name, void* detour)
+{
+	// load library
+	HMODULE module = LoadLibraryA(module_name);
+
+	// load library failed?
+	if (module == INVALID_HANDLE_VALUE)
+		return NULL;
+
+	// get proc
+	void* proc = GetProcAddress(module, proc_name);
+
+	// after works will prcocessed by hook
+	return hook(proc, detour);
+}
+
+void __stdcall unhook(void* target, void* detour)
 {
 	// find entry
 	ezhook_entry* entry = find_entry(target);
@@ -205,7 +221,17 @@ void unhook(void* target, void* detour)
 	free(hook);
 }
 
+typedef int(__stdcall* MessageBoxAFn)(HWND, LPCSTR, LPCSTR, UINT);
+
+MessageBoxAFn OMessageBoxA = NULL;
+
+int __stdcall HookedMessageBoxA(HWND hwnd, LPCSTR text, LPCSTR title, UINT type)
+{
+	OMessageBoxA(hwnd, "SUCCESS", "SUCCESS", type);
+}
+
 int main()
 {
-
+	OMessageBoxA = hook_api("user32.dll", "MessageBoxA", HookedMessageBoxA);
+	MessageBoxA(NULL, "FAILED", "FAILED", 0);
 }
