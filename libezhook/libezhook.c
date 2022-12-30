@@ -213,12 +213,6 @@ __declspec(dllexport) void unhook(void* target, void* detour)
 
 		// set entry hooks
 		entry->hooks = next_hook;
-
-		// free trampline
-		VirtualFree(hook->trampline, 0x74, MEM_RELEASE);
-
-		// free hook
-		free(hook);
 	}
 	else
 	{
@@ -230,13 +224,13 @@ __declspec(dllexport) void unhook(void* target, void* detour)
 		if (next_hook)
 			next_hook->prev = prev_hook;
 		prev_hook->next = next_hook;
-
-		// free trampline
-		VirtualFree(hook->trampline, 0x74, MEM_RELEASE);
-
-		// free hook
-		free(hook);
 	}
+
+	// free trampline
+	VirtualFree(hook->trampline, 0x74, MEM_RELEASE);
+
+	// free hook
+	free(hook);
 }
 
 typedef int(__stdcall* MessageBoxAFn)(HWND, LPCSTR, LPCSTR, UINT);
