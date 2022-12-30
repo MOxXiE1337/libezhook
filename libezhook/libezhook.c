@@ -166,8 +166,20 @@ void* __stdcall hook_api(const char* module_name, const char* proc_name, void* d
 	// get proc
 	void* proc = GetProcAddress(module, proc_name);
 
-	// after works will prcocessed by hook
+	// after works will be prcocessed by hook
 	return hook(proc, detour);
+}
+
+void* __stdcall hook_virtual(void* class_pointer, unsigned int index, void* detour)
+{
+	// get virtual function table
+	void** vtable = *(void***)class_pointer;
+
+	// get virtual function
+	void* vfunc = vtable[index];
+
+	// after works will be prcocessed by hook
+	return hook(vfunc, detour);
 }
 
 void __stdcall unhook(void* target, void* detour)
@@ -221,17 +233,3 @@ void __stdcall unhook(void* target, void* detour)
 	free(hook);
 }
 
-typedef int(__stdcall* MessageBoxAFn)(HWND, LPCSTR, LPCSTR, UINT);
-
-MessageBoxAFn OMessageBoxA = NULL;
-
-int __stdcall HookedMessageBoxA(HWND hwnd, LPCSTR text, LPCSTR title, UINT type)
-{
-	OMessageBoxA(hwnd, "SUCCESS", "SUCCESS", type);
-}
-
-int main()
-{
-	OMessageBoxA = hook_api("user32.dll", "MessageBoxA", HookedMessageBoxA);
-	MessageBoxA(NULL, "FAILED", "FAILED", 0);
-}
